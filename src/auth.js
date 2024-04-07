@@ -8,17 +8,13 @@ function extractTokenFromHeader(request) {
 }
 
 
-export async function authAccess(req, res, next) {
-  const token = extractTokenFromHeader(req)
-  if(!token) {
-    return res.status(401).json({message: 'Unauthorized, missing access token'})
-  }
+export async function authAccess(ctx, next) {
+  const token = extractTokenFromHeader(ctx.request)
+  ctx.assert(token, 401, 'Unauthorized, missing access token')
   const user = await redis.get(`ak:${token}`)
-  if(!user) {
-    return res.status(403).json({message: 'Unauthorized, invalid access token'})
-  }
-  req.user = JSON.parse(user)
-  next()
+  ctx.assert(user, 403, 'Unauthorized, invalid access token', { token })
+  ctx.state.user = JSON.parse(user)
+  await next()
 }
 
 export async function authUser(user) {

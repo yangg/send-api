@@ -1,63 +1,46 @@
+import Koa from 'koa'
+import {bodyParser} from "@koa/bodyparser";
+
 import config from '../config/index.js'
-import express from 'express';
-import {sendEmail} from "./email.js";
-import {authAccess, authUser} from "./auth.js";
-import {getSMTPConfig} from "./utils.js";
+import router from "./router.js";
+const app = new Koa();
 
-const app = express()
-const port = config.get('port')
-
-app.use(express.json())
-
-
-app.get('/', (req, res) => {
-  res.json({message: 'Hello World!'})
-})
-
-app.post('/auth', async (req, res) => {
-  const authInfo = await authUser(req.body)
-  res.json(authInfo)
-})
-
-
-
-app.use(authAccess)
-
-/**
- * Message configuration
- * https://www.nodemailer.com/message/
- */
-app.post('/emails', async (req, res) => {
-  const body = req.body
-  const user = req.user
-  user.smtp = {
-    ...getSMTPConfig(user.user),
-    ...user.smtp
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    console.log('xx', err)
+    ctx.status = err.status || 500;
+    ctx.body = {
+      statusCode: ctx.status,
+      message: err.message
+    };
+    ctx.app.emit('error', err, ctx);
   }
-  console.log(11, user)
-  body.from = `${JSON.stringify(body.from)} <${user.user}>`
-  const data = await sendEmail(body, user)
-  res.json(data)
 })
 
-app.get('/error', (req, res, next) => {
-  // 创建一个错误对象
-  const err = new Error('这是一个错误');
-  // 可以设置状态码
-  err.statusCode = 400;
-  throw err
+app.use(bodyParser({
+  enableTypes: ['json'],
+  strict: true,
+  onError: function (err, ctx) {
+    ctx.throw(422, 'Body parser error');
+  }
+}))
+
+app
+  .use(router.routes())
+  .use(router.allowedMethods());
+
+process.on("unhandledRejection", (reason) => {
+  console.error('unhandledRejection', reason)
 });
 
-app.use((err, req, res) => {
-  console.error(err)
-  const statusCode = err.statusCode || 500
-  res.status(statusCode).json({
-    statusCode,
-    message: err.message
-  })
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException', err)
+});
+
+app.on('error', (err, ctx) => {
+  console.error('app error', err)
 })
 
-app.listen(port, (xx) => {
-  console.log(config.toString())
-  console.log(`send-api listening on port http://127.0.0.1:${port}`)
-})
+app.listen(config.get('port'));
