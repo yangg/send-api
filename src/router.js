@@ -16,7 +16,7 @@ router.post('/', (ctx) => {
 });
 router.get('/error1', () => {
   const err = new Error('Sync error');
-  err.statusCode = 400;
+  err.status = 400;
   err.expose = true
   throw err
 });
@@ -24,13 +24,13 @@ router.get('/error1', () => {
 router.get('/error2', async () => {
   await new Promise((resolve) => setTimeout(resolve, 1))
   const err = new Error('Async error');
-  err.statusCode = 400;
+  err.status = 400;
   throw err
 });
 
 router.post('/auth', async (ctx) => {
   const clientIP = ctx.request.ip
-  console.log({clientIP})
+  ctx.assert(clientIP === '::ffff:127.0.0.1', 403, 'Forbidden', {clientIP})
   const authInfo = await authUser(ctx.request.body)
   ctx.body = authInfo
 })

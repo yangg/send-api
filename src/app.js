@@ -11,11 +11,10 @@ app.use(async (ctx, next) => {
   try {
     await next();
   } catch (err) {
-    console.log('xx', err)
     ctx.status = err.status || 500;
     ctx.body = {
       statusCode: ctx.status,
-      message: err.message
+      message: err.message,
     };
     ctx.app.emit('error', err, ctx);
   }
@@ -46,3 +45,4 @@ app.on('error', (err, ctx) => {
 })
 
 app.listen(config.get('port'));
+console.log(config.toString())

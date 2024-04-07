@@ -31,7 +31,7 @@ export async function authAccess(ctx, next) {
 export async function authUser(body) {
   const user = await redis.get(`user:${body.user}` )
   if(!user) {
-    throw ('User not found')
+    throw new Error('User not found')
   }
   const ak = generateAccessToken()
   await redis.set(`ak:${ak}`, body.user)
