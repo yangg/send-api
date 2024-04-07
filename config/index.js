@@ -20,7 +20,7 @@ const config = convict({
   redis: {
     doc: 'redis url',
     format: '*',
-    default: 'redis://s2:6376/10'
+    default: 'redis://redis.prd:6379/10'
   }
 });
 function tryLoadFile(file) {

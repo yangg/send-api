@@ -3,6 +3,9 @@ module.exports = {
     name   : "send-api",
     script : "npm",
     args   : "start",
+    env_production: {
+      NODE_ENV: 'production'
+    },
   }],
   deploy: {
     production: {
