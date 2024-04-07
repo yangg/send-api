@@ -29,23 +29,35 @@ app.use(authAccess)
  */
 app.post('/emails', async (req, res) => {
   const body = req.body
-  try {
-    const user = req.user
-    user.smtp = {
-      ...getSMTPConfig(user.user),
-      ...user.smtp
-    }
-    console.log(11, user)
-    body.from = `${JSON.stringify(body.from)} <${user.user}>`
-    const data = await sendEmail(body, user)
-    res.json(data)
-  } catch (ex) {
-    console.error(ex)
-    res.status(500).json({message: ex.message})
+  const user = req.user
+  user.smtp = {
+    ...getSMTPConfig(user.user),
+    ...user.smtp
   }
+  console.log(11, user)
+  body.from = `${JSON.stringify(body.from)} <${user.user}>`
+  const data = await sendEmail(body, user)
+  res.json(data)
+})
+
+app.get('/error', (req, res, next) => {
+  // 创建一个错误对象
+  const err = new Error('这是一个错误');
+  // 可以设置状态码
+  err.statusCode = 400;
+  throw err
+});
+
+app.use((err, req, res) => {
+  console.error(err)
+  const statusCode = err.statusCode || 500
+  res.status(statusCode).json({
+    statusCode,
+    message: err.message
+  })
 })
 
 app.listen(port, (xx) => {
-  console.log(`send-api listening on port http://127.0.0.1:${port}`)
   console.log(config.toString())
+  console.log(`send-api listening on port http://127.0.0.1:${port}`)
 })
