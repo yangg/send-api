@@ -3,7 +3,9 @@ import {bodyParser} from "@koa/bodyparser";
 
 import config from '../config/index.js'
 import router from "./router.js";
-const app = new Koa();
+const app = new Koa({
+  proxy: true
+});
 
 app.use(async (ctx, next) => {
   try {

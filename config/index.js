@@ -6,8 +6,8 @@ convict.addParser({extension: 'json5', parse: JSON5.parse})
 const config = convict({
   env: {
     doc: 'The application environment.',
-    format: ['production', 'dev'],
-    default: 'dev',
+    format: ['production', 'development'],
+    default: 'development',
     env: 'NODE_ENV'
   },
   port: {

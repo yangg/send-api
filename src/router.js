@@ -6,7 +6,7 @@ import {authAccess, authUser} from "./auth.js";
 const router = new Router();
 router.get('/', (ctx) => {
   ctx.body = {
-    message: 'Hello World'
+    env: ctx.app.env
   };
 });
 router.post('/', (ctx) => {
@@ -29,6 +29,8 @@ router.get('/error2', async () => {
 });
 
 router.post('/auth', async (ctx) => {
+  const clientIP = ctx.request.ip
+  console.log({clientIP})
   const authInfo = await authUser(ctx.request.body)
   ctx.body = authInfo
 })

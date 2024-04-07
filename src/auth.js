@@ -2,24 +2,39 @@
 import redis from './redis.js'
 import {generateAccessToken} from "./utils.js";
 
+const luaScript= `
+local key = KEYS[1]
+local prefix = KEYS[2]
+local userId = redis.call('GET', key)
+if not userId then
+  return nil
+end
+local user = redis.call('GET', prefix .. userId)
+return user
+`
+
 function extractTokenFromHeader(request) {
   const [type, token] = request.headers.authorization?.split(' ') ?? [];
-  return type === 'Bearer' && token !== 'undefined' ? token : undefined;
+  return type === 'Bearer' && token !== 'undefined' ? token : null;
 }
 
 
 export async function authAccess(ctx, next) {
   const token = extractTokenFromHeader(ctx.request)
   ctx.assert(token, 401, 'Unauthorized, missing access token')
-  const user = await redis.get(`ak:${token}`)
+  const user = await redis.eval(luaScript, 2, `ak:${token}`, 'user:')
   ctx.assert(user, 403, 'Unauthorized, invalid access token', { token })
   ctx.state.user = JSON.parse(user)
   await next()
 }
 
-export async function authUser(user) {
+export async function authUser(body) {
+  const user = await redis.get(`user:${body.user}` )
+  if(!user) {
+    throw ('User not found')
+  }
   const ak = generateAccessToken()
-  await redis.set(`ak:${ak}`, JSON.stringify(user))
+  await redis.set(`ak:${ak}`, body.user)
   return {
     accessToken: ak,
     expiresIn: null,
